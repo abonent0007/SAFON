@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\Users\User\Documents\SAFON\web\app.py", line 206, in <module>
+    app = create_app()
+          ^^^^^^^^^^^^
+  File "C:\Users\User\Documents\SAFON\web\app.py", line 53, in create_app
+    predictor.generate_predictions(
+  File "C:\Users\User\Documents\SAFON\core\predictor.py", line 105, in generate_predictions
+    self.analyze_astrometry_correlations()
+  File "C:\Users\User\Documents\SAFON\core\predictor.py", line 78, in analyze_astrometry_correlations
+    correlations = self.astro.analyze_historical_correlations(events)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Documents\SAFON\core\astrometry.py", line 200, in analyze_historical_correlations
+    print(f"      \u2713 {p1}-{p2} {aspect_name} \u2192 {category} (lift {lift:.1f}x)")
+  File "C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\encodings\cp1251.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 6: character maps to <undefined>

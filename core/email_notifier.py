@@ -1,14 +1,16 @@
 """
-Модуль отправки email уведомлений — полноценный HTML-отчёт
+Модуль отправки email уведомлений — полноценный HTML-отчёт.
+Данные категорий (цвета/иконки) и порогов/горизонта берутся из конфига и окружения.
 """
 
+import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from typing import List, Dict
+from typing import Dict, List, Tuple
 
-from .database import EVENT_CATEGORIES
+from .config import get_categories
 
 
 def _safe_print(message):
@@ -34,20 +36,18 @@ class EmailNotifier:
             password=env_vars.get('SMTP_PASSWORD', '')
         )
 
-    def send_important_predictions(self, recipient: str, predictions: List[Dict]) -> bool:
-        if not predictions or not self.username or not self.password:
-            return False
+    def send_important_predictions(self, recipient: str, predictions: List[Dict]) -> Tuple[bool, str]:
+        """Отправляет HTML-отчёт. Возвращает (успех, пояснение/текст ошибки)."""
+        if not predictions:
+            return False, 'Нет предсказаний для отправки'
+        if not self.username or not self.password:
+            return False, 'SMTP логин/пароль не настроены'
+
+        threshold = int(float(os.getenv('HIGH_IMPORTANCE_THRESHOLD', 0.70)) * 100)
+        horizon = os.getenv('PREDICTION_HORIZON', '80')
+        categories = get_categories()
 
         subject = f"SAFON — Important predictions ({len(predictions)} events)"
-
-        colors = {
-            'землетрясение': '#ff6600', 'цунами': '#0066ff',
-            'наводнение': '#00ccff', 'пожар': '#ff4400',
-            'ураган': '#44aaff', 'экономический кризис': '#ff8800',
-            'война': '#ff0000', 'эпидемия': '#8800ff',
-            'засуха': '#cc8800', 'революция': '#ff00ff',
-            'экологическая катастрофа': '#22aa22',
-        }
 
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -65,12 +65,12 @@ class EmailNotifier:
         Fractal-Causal Autonomous Prediction System
     </p>
     <p style="color:#8892b0;margin:4px 0 0;font-size:11px;">
-        Report generated: {now} | Horizon: 80 years | DeepSeek V4 Pro
+        Report generated: {now} | Horizon: {horizon} years | DeepSeek
     </p>
 </div>
 
 <div style="background:rgba(255,68,68,0.1);border-radius:8px;padding:15px;margin:20px 0;text-align:center;">
-    <h2 style="margin:0 0 10px;font-size:18px;color:#ff4444;">KEY EVENTS (probability >= 70%)</h2>
+    <h2 style="margin:0 0 10px;font-size:18px;color:#ff4444;">KEY EVENTS (probability >= {threshold}%)</h2>
     <p style="margin:0;color:#8892b0;font-size:12px;">{len(predictions)} high-probability events</p>
 </div>
 """
@@ -82,8 +82,9 @@ class EmailNotifier:
             location = p.get('location', 'global')
             description = p.get('description', '')
             reasoning = p.get('reasoning', '')
-            cat_color = colors.get(cat, '#00d4ff')
-            cat_icon = EVENT_CATEGORIES.get(cat, {}).get('icon', '')
+            meta = categories.get(cat, {})
+            cat_color = meta.get('color', '#00d4ff')
+            cat_icon = meta.get('icon', '')
             prob_color = '#ff4444' if prob >= 80 else '#ffaa00' if prob >= 70 else '#ffcc66'
 
             html_body += f"""
@@ -108,8 +109,8 @@ class EmailNotifier:
 
         html_body += f"""
 <div style="text-align:center;padding:20px;margin-top:20px;border-top:1px solid #2a2f4a;color:#8892b0;font-size:11px;">
-    SAFON v4.0 | Autonomous Fractal-Causal Prediction System<br>
-    DeepSeek V4 Pro | 80-year forecast horizon<br>
+    SAFON | Autonomous Fractal-Causal Prediction System<br>
+    DeepSeek | {horizon}-year forecast horizon<br>
     {len(predictions)} high-probability events in this report
 </div>
 
@@ -127,7 +128,7 @@ class EmailNotifier:
                 server.login(self.username, self.password)
                 server.send_message(msg)
             _safe_print(f"Email sent to {recipient}")
-            return True
+            return True, f'Отправлено на {recipient}'
         except Exception as e:
             _safe_print(f"Email error: {e}")
-            return False
+            return False, str(e)

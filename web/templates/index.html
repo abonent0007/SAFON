@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>С.А.Ф.О.Н. — Система прогнозирования будущих событий</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="icon" href="/static/MIG.png" />
+    <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
+    <script src="/static/vendor/leaflet/leaflet.js"></script>
     <style>
         * {
             margin: 0;
@@ -15,16 +16,43 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            background: #080c1a;
             color: #ffffff;
             min-height: 100vh;
         }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 20% 20%, rgba(0,180,255,0.06) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 60%, rgba(255,170,0,0.04) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 80%, rgba(100,50,255,0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
         
         .header {
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(10,14,30,0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid #2a2f4a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            position: relative;
+            z-index: 2;
+            flex-wrap: wrap;
+        }
+        .header-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            object-fit: contain;
+        }
+        .header-text {
+            text-align: left;
         }
         
         .header h1 {
@@ -45,6 +73,8 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
+            position: relative;
+            z-index: 1;
         }
         
         /* AI Status Panel */
@@ -61,11 +91,13 @@
         
         /* Key Events */
         .key-events {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(12,16,28,0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.05);
             border-radius: 15px;
             padding: 25px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(5px);
+            margin-bottom: 25px;
         }
         
         .key-events h2 {
@@ -82,10 +114,13 @@
         }
         
         .event-card {
-            background: rgba(30, 35, 60, 0.8);
+            background: rgba(18,22,36,0.8);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.04);
             border-radius: 12px;
             padding: 15px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
             cursor: pointer;
             border-left: 4px solid;
         }
@@ -130,10 +165,13 @@
         
         /* Map */
         .map-section {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(12,16,28,0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.05);
             border-radius: 15px;
             padding: 25px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         
         .map-section h2 {
@@ -141,9 +179,10 @@
         }
         
         #map {
-            height: 400px;
+            height: 600px;
             border-radius: 12px;
             overflow: hidden;
+            background: #0a0e27;
         }
         
         /* Events Detail */
@@ -154,15 +193,19 @@
         }
         
         .detail-card {
-            background: rgba(30, 35, 60, 0.8);
+            background: rgba(18,22,36,0.7);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-left: 3px solid #2a2f4a;
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 10px;
-            transition: 0.2s;
+            transition: background 0.25s, border-left-color 0.25s;
         }
         
         .detail-card:hover {
-            background: rgba(40, 45, 70, 0.9);
+            background: rgba(25,30,50,0.85);
         }
         
         .detail-header {
@@ -314,10 +357,13 @@
         
         /* Causal Analysis */
         .causal-panel {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(12,16,28,0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.05);
             border-radius: 15px;
             padding: 25px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .causal-panel h2 {
@@ -404,20 +450,204 @@
             .btn {
                 width: 100%;
             }
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header-text {
+                text-align: center;
+            }
+        }
+
+        /* ===== TIMELINE ===== */
+        .timeline-section {
+            background: rgba(12,16,28,0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px 10px 15px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+        .timeline-section h2 {
+            margin: 0 0 5px 15px;
+            font-size: 1.3em;
+            border-left: 4px solid #ffaa00;
+            padding-left: 12px;
+        }
+        .timeline-wrap {
+            overflow-x: auto;
+            overflow-y: visible;
+            padding: 30px 20px 15px;
+            cursor: default;
+            -webkit-overflow-scrolling: touch;
+        }
+        .timeline-wrap::-webkit-scrollbar { height: 4px; }
+        .timeline-wrap::-webkit-scrollbar-thumb { background: #3a3f5a; border-radius: 2px; }
+        .timeline-rail {
+            position: relative;
+            height: 80px;
+            min-width: 2000px;
+        }
+        .timeline-line {
+            position: absolute;
+            top: 45px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ffaa0040, #ffaa00, #ffcc00, #ffaa00, #ffaa0040);
+            border-radius: 2px;
+            box-shadow: 0 0 12px rgba(255,170,0,0.3);
+        }
+        .timeline-now {
+            position: absolute;
+            top: 20px;
+            width: 2px;
+            height: 55px;
+            background: #ff4444;
+            box-shadow: 0 0 10px rgba(255,68,68,0.6);
+            z-index: 2;
+        }
+        .timeline-now-label {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65em;
+            font-weight: bold;
+            color: #ff4444;
+            white-space: nowrap;
+            background: #0a0e27;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+        .timeline-year {
+            position: absolute;
+            top: 58px;
+            transform: translateX(-50%);
+            font-size: 0.6em;
+            color: #667;
+            white-space: nowrap;
+        }
+        .timeline-year.major {
+            color: #8892b0;
+            font-weight: bold;
+            font-size: 0.65em;
+        }
+        .timeline-dot {
+            position: absolute;
+            top: 41px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.15s ease, height 0.15s ease, margin-top 0.15s ease, box-shadow 0.2s;
+            cursor: pointer;
+            z-index: 3;
+        }
+        .timeline-dot:hover {
+            z-index: 10;
+            box-shadow: 0 0 12px currentColor;
+        }
+        .timeline-dot-label {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1f3a;
+            border: 1px solid #2a2f4a;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.6em;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 11;
+        }
+        .timeline-dot:hover .timeline-dot-label,
+        .timeline-dot.magnified .timeline-dot-label {
+            display: block;
+        }
+        .timeline-dot.multi-event {
+            border: 1.5px solid #fff;
+        }
+
+        /* ===== FILTERS ===== */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-bar select, .filter-bar button {
+            padding: 7px 14px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #2a2f4a;
+            border-radius: 6px;
+            color: #ccd6f6;
+            font-size: 0.82em;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .filter-bar select:hover, .filter-bar button:hover {
+            border-color: #00d4ff;
+            color: #fff;
+        }
+        .filter-bar select:focus { outline: none; border-color: #00d4ff; }
+        .filter-bar .filter-active {
+            border-color: #ffaa00;
+            color: #ffaa00;
+        }
+        .filter-count {
+            color: #8892b0;
+            font-size: 0.75em;
+            margin-left: auto;
         }
     </style>
 </head>
 <body>
+    <svg style="position:absolute;width:0;height:0;" aria-hidden="true">
+        <defs>
+            <!-- землетрясение: сейсмическая волна + трещина -->
+            <path id="s-polygon" d="M1,11 L4,5 L7,9 L9,3 L11,8 L14,2 L15,6 M0,8 L3,2 L6,6 L8,0 L10,5 L13,-1"/>
+            <!-- цунами: высокая волна -->
+            <path id="s-wave" d="M0,13 C2,7 4,3 7,5 C9,6 9,1 13,4 L15,4 L15,15 L0,15Z"/>
+            <!-- наводнение: дом в воде -->
+            <path id="s-drop" d="M4,11 L4,7 L8,3 L12,7 L12,11 L4,11ZM4,15 L12,15 L12,11 L4,11Z M6,15 L6,12 L10,12 L10,15"/>
+            <!-- пожар: пламя -->
+            <path id="s-triangle" d="M8,0 C5,5 3,7 3,11 C3,14 5,16 8,16 C11,16 13,14 13,11 C13,8 10,5 8,0ZM8,9 C8,9 9,10 9,11 C9,12 8,13 8,13 C7,13 6,12 6,11 C6,10 7,9 8,9Z"/>
+            <!-- ураган: спираль -->
+            <path id="s-spiral" d="M8,8 C8,3 13,2 14,6 C15,10 12,14 7,14 C3,14 1,10 3,7 C5,4 9,3 12,5 C14,7 13,10 11,11"/>
+            <!-- экон. кризис: график падения -->
+            <path id="s-diamond" d="M1,15 L1,7 L4,4 L8,9 L12,2 L15,13 L15,15ZM11,1 L15,5 L13,3 L11,5Z"/>
+            <!-- война: взрыв -->
+            <path id="s-hexagon" d="M8,0 L10,5 L15,6 L11,10 L12,15 L8,12 L4,15 L5,10 L1,6 L6,5Z M8,5 L8,10 M6,7 L10,7 M7,6 L9,11"/>
+            <!-- эпидемия: вирус -->
+            <path id="s-cross" d="M8,2 C8,5 10,6 13,6 L13,10 C10,10 8,11 8,14 C8,11 6,10 3,10 L3,6 C6,6 8,5 8,2Z M6,3 L3,0 M10,3 L13,0 M3,13 L0,16 M13,13 L16,16 M2,8 L0,8 M14,8 L16,8"/>
+            <!-- засуха: солнце + трещина -->
+            <path id="s-square" d="M8,2 L8,5 M8,12 L8,15 M2,8 L5,8 M11,8 L15,8 M4,4 L6,6 M10,4 L12,6 M4,12 L6,10 M10,12 L12,10 M8,7 C6,7 5,9 6,11 C7,13 9,13 10,11 L7,10"/>
+            <!-- революция: поднятый кулак -->
+            <path id="s-star" d="M6,14 L6,9 C6,9 4,7 4,5 C4,3 7,2 8,2 C8,1 7,0 9,0 C10,0 9,1 9,2 C10,2 13,3 13,5 C13,7 11,9 11,9 L11,14Z"/>
+            <!-- экокатастрофа: радиация -->
+            <path id="s-octagon" d="M8,1 C8,3 6,4 4,3 C3,5 4,7 3,9 C5,10 6,9 8,9 C10,9 11,10 13,9 C12,7 13,5 12,3 C10,4 8,3 8,1Z M8,6 C9,6 10,7 10,8 C10,10 9,11 8,11 C7,11 6,10 6,8 C6,7 7,6 8,6Z M8,8"/>
+        </defs>
+    </svg>
     <div class="header">
+        <img src="/static/MIG.png" alt="SAFON" class="header-logo">
+        <div class="header-text">
         <h1>С.А.<span>Ф</span>.О.<span>Н</span>.</h1>
         <div class="subtitle">Система Автономного Фрактально-Причинного Оркестрированного Наведения</div>
         <div class="subtitle" style="font-size: 0.8em;">Прогнозирование будущих событий на основе исторических циклов и астрометрии</div>
+        </div>
     </div>
     
     <div class="container">
         <!-- AI Status -->
         <div class="ai-status">
-            <span id="aiStatusIcon">🤖</span> DeepSeek V4 Pro: 
+            <span id="aiStatusIcon">🤖</span> DeepSeek: 
             <span id="aiStatusText" style="font-weight: bold;">Проверка...</span>
         </div>
         
@@ -428,7 +658,26 @@
                 <div id="opProgressFill" style="height:100%; width:0%; background:linear-gradient(90deg, #ffaa00, #00d4ff); border-radius:2px; transition: width 0.3s;"></div>
             </div>
         </div>
-        
+
+        <!-- Accuracy Panel -->
+        <div id="accuracyPanel" class="key-events" style="padding:15px 25px;">
+            <h2 style="font-size:1.1em;margin-bottom:12px;border-left-color:#00ff88;">📊 ТОЧНОСТЬ ПРОГНОЗОВ (бэктестинг)</h2>
+            <div id="accuracyBars"></div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-section">
+            <h2>⏳ ЛИНИЯ ВРЕМЕНИ (100 лет: -5 / сейчас / +95)</h2>
+            <div class="timeline-wrap" id="timelineWrap">
+                <div class="timeline-rail" id="timelineRail">
+                    <div class="timeline-line"></div>
+                    <div id="timelineNow" class="timeline-now">
+                        <span class="timeline-now-label">СЕЙЧАС</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Key Events -->
         <div class="key-events">
             <h2>⚠️ КЛЮЧЕВЫЕ СОБЫТИЯ (вероятность > 70%)</h2>
@@ -441,6 +690,18 @@
         <div class="map-section">
             <h2>🌍 КАРТА БУДУЩИХ СОБЫТИЙ</h2>
             <div id="map"></div>
+            <!-- Фильтр списка событий — рядом с блоком, который он фильтрует -->
+            <div class="filter-bar" style="margin: 15px 0;">
+                <span style="color:#8892b0;font-size:0.85em;">Фильтр событий:</span>
+                <select id="filterCountry" onchange="applyFilters()">
+                    <option value="all">🌍 Все регионы</option>
+                </select>
+                <select id="filterCategory" onchange="applyFilters()">
+                    <option value="all">📂 Все категории</option>
+                </select>
+                <button id="sortBtn" onclick="toggleSort()">📅 По году ↑</button>
+                <span class="filter-count" id="filterCount"></span>
+            </div>
             <div class="events-detail" id="eventsDetail">
                 <div class="loader" id="detailLoader"><div class="spinner"></div></div>
             </div>
@@ -460,10 +721,13 @@
                 🔄 ОБНОВИТЬ ПРЕДСКАЗАНИЯ (DeepSeek AI)
             </button>
             <button class="btn btn-ai" onclick="enrichHistory()">
-                🌐 ПОПОЛНИТЬ БАЗУ СОБЫТИЙ (Wikipedia + поиск)
+                🌐 ПОПОЛНИТЬ БАЗУ (Wikipedia + поиск)
+            </button>
+            <button class="btn btn-secondary" onclick="runBacktest()">
+                🔬 БЭКТЕСТИНГ ТОЧНОСТИ
             </button>
             <button class="btn btn-secondary" onclick="openEmailModal()">
-                📧 ОТПРАВИТЬ НА ПОЧТУ (ВАЖНО)
+                📧 ОТПРАВИТЬ НА ПОЧТУ
             </button>
         </div>
         
@@ -472,17 +736,26 @@
             С.А.Ф.О.Н. — автономная система прогнозирования | 
             Фрактально-причинный анализ | 
             Горизонт прогноза: 80 лет | 
-            Нейросеть: DeepSeek V4 Pro | 
-            Версия 4.0
+            Нейросеть: DeepSeek | 
+            Версия 4.3
         </div>
     </div>
     
+    <!-- Event Detail Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content" style="max-width:650px;max-height:80vh;overflow-y:auto;">
+            <span class="close" onclick="closeEventModal()">&times;</span>
+            <h3 id="eventModalTitle"></h3>
+            <div id="eventModalBody"></div>
+        </div>
+    </div>
+
     <!-- Email Modal -->
     <div id="emailModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeEmailModal()">&times;</span>
             <h3>📧 Отправка важного отчёта</h3>
-            <p>Будут отправлены все события с вероятностью >75%</p>
+            <p id="emailThresholdText">Будут отправлены все события с высокой вероятностью</p>
             <input type="email" id="recipientEmail" placeholder="Email получателя">
             <button class="btn btn-primary" onclick="sendEmailReport()" style="width: 100%;">Отправить</button>
         </div>
@@ -491,40 +764,48 @@
     <script>
         let map;
         let markers = [];
+        let allPredictions = [];
+        let filteredPredictions = [];
+        let sortAsc = true;
+        let currentYear = new Date().getFullYear();
         
+        // ========== КОНФИГ СЕРВЕРА (динамические данные) ==========
+        let SAFON_CONFIG = { categories: {}, threshold: 0.75, horizon: 80 };
+        async function loadServerConfig() {
+            try {
+                const response = await fetch('/api/config');
+                SAFON_CONFIG = await response.json();
+                const thr = Math.round((SAFON_CONFIG.threshold || 0.75) * 100);
+                const el = document.getElementById('emailThresholdText');
+                if (el) el.textContent = 'Будут отправлены все события с вероятностью ≥' + thr + '%';
+            } catch (error) {
+                console.error('Не удалось загрузить конфиг сервера:', error);
+            }
+        }
+
         // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
         function getCategoryColor(category) {
-            const colors = {
-                'землетрясение': '#ff6600',
-                'цунами': '#0066ff',
-                'наводнение': '#00ccff',
-                'пожар': '#ff4400',
-                'ураган': '#44aaff',
-                'экономический кризис': '#ff8800',
-                'война': '#ff0000',
-                'эпидемия': '#8800ff',
-                'засуха': '#cc8800',
-                'революция': '#ff00ff',
-                'экологическая катастрофа': '#22aa22'
-            };
-            return colors[category] || '#00d4ff';
+            const meta = SAFON_CONFIG.categories[category];
+            return (meta && meta.color) || '#00d4ff';
         }
         
+        function getCategoryShape(category) {
+            const meta = SAFON_CONFIG.categories[category];
+            return (meta && meta.shape) || 'circle';
+        }
+
         function getCategoryIcon(category) {
-            const icons = {
-                'землетрясение': '🌋',
-                'цунами': '🌊',
-                'наводнение': '💧',
-                'пожар': '🔥',
-                'ураган': '🌀',
-                'экономический кризис': '📉',
-                'война': '⚠️',
-                'эпидемия': '🦠',
-                'засуха': '☀️',
-                'революция': '✊',
-                'экологическая катастрофа': '☢️'
-            };
-            return icons[category] || '📍';
+            const color = getCategoryColor(category);
+            const shape = getCategoryShape(category);
+            return `<svg width="16" height="16" viewBox="0 0 16 16" style="display:inline-block;vertical-align:middle;margin-right:2px;"><use href="#s-${shape}" fill="${color}"/></svg>`;
+        }
+
+        function getCategoryIconSVG() {
+            var icons = {};
+            for (const [cat, meta] of Object.entries(SAFON_CONFIG.categories)) {
+                icons[cat] = (meta && meta.shape) || 'circle';
+            }
+            return icons;
         }
         
         // ========== AI СТАТУС ==========
@@ -542,7 +823,7 @@
                         statusSpan.style.color = '#00ff88';
                     } else if (status.mode === 'api') {
                         iconSpan.innerHTML = '☁️';
-                        statusSpan.innerHTML = 'API DeepSeek';
+                        statusSpan.innerHTML = 'API (облачный)';
                         statusSpan.style.color = '#00ff88';
                     } else {
                         iconSpan.innerHTML = '🤖';
@@ -578,7 +859,7 @@
                     container.innerHTML = '<div style="text-align: center;">Нет событий с высокой вероятностью</div>';
                 } else {
                     container.innerHTML = events.map(event => `
-                        <div class="event-card" style="border-left-color: ${getCategoryColor(event.category)}" onclick="scrollToDetail(${event.predicted_year})">
+                        <div class="event-card" style="border-left-color: ${getCategoryColor(event.category)}" onclick="openEventModal(event);scrollToDetail(${event.predicted_year})">
                             <div class="year">${event.predicted_year} год</div>
                             <div class="category" style="background: ${getCategoryColor(event.category)}20; color: ${getCategoryColor(event.category)}">
                                 ${getCategoryIcon(event.category)} ${event.category}
@@ -604,35 +885,38 @@
             const container = document.getElementById('eventsDetail');
             const loader = document.getElementById('detailLoader');
             loader.classList.add('active');
-            
+
             try {
                 const response = await fetch('/api/predictions');
                 const data = await response.json();
-                const predictions = data.predictions;
-                
-                if (predictions.length === 0) {
+                allPredictions = data.predictions || [];
+                filteredPredictions = [...allPredictions];
+
+                if (allPredictions.length === 0) {
                     container.innerHTML = '<div style="text-align: center;">Нет предсказаний</div>';
                 } else {
                     const byDecade = {};
-                    predictions.forEach(p => {
-                        const decade = Math.floor(p.predicted_year / 10) * 10;
+                    allPredictions.forEach(p => {
+                        const yr = p.predicted_year || p.year;
+                        const decade = Math.floor(yr / 10) * 10;
                         if (!byDecade[decade]) byDecade[decade] = [];
                         byDecade[decade].push(p);
                     });
-                    
+
                     let html = '';
                     for (const decade of Object.keys(byDecade).sort()) {
                         html += `<h3 style="margin: 15px 0 10px 0; color: #00d4ff;">📅 ${decade}-е годы</h3>`;
                         for (const p of byDecade[decade]) {
                             const probPercent = (p.probability * 100).toFixed(0);
                             const aiBadge = p.ai_enhanced ? '<span class="ai-badge">AI</span>' : '';
+                            const yr = p.predicted_year || p.year;
                             html += `
-                                <div class="detail-card" id="detail-${p.predicted_year}">
+                                <div class="detail-card" id="detail-${yr}" style="border-left-color:${getCategoryColor(p.category)}">
                                     <div class="detail-header">
                                         <strong>${getCategoryIcon(p.category)} ${p.category.toUpperCase()} ${aiBadge}</strong>
                                         <span style="color: ${p.probability > 0.7 ? '#ff6666' : '#ffcc66'}">⭐ ${probPercent}%</span>
                                     </div>
-                                    <div>📅 ${p.predicted_year} год (${p.predicted_month ? p.predicted_month + ' месяц' : 'лето'})</div>
+                                    <div>📅 ${yr} год (${p.predicted_month ? p.predicted_month + ' месяц' : 'лето'})</div>
                                     <div class="detail-location">📍 ${p.location}</div>
                                     <div class="detail-desc">📝 ${p.description || 'Значительное событие'}</div>
                                     <div class="detail-desc" style="font-size: 0.85em; color: #8892b0;">🧠 ${p.reasoning || 'Анализ исторических циклов'}</div>
@@ -642,48 +926,278 @@
                     }
                     container.innerHTML = html;
                 }
+
+                // After data loaded: build timeline + populate filters
+                buildTimeline(allPredictions);
             } catch (error) {
                 console.error(error);
                 container.innerHTML = '<div style="text-align: center;">Ошибка загрузки данных</div>';
             } finally {
                 loader.classList.remove('active');
             }
+
+            // Фильтры и таймлайн обновляются всегда, даже если рендер списка дал сбой
+            populateFilters();
+            const hasActiveFilter = document.getElementById('filterCountry').value !== 'all'
+                || document.getElementById('filterCategory').value !== 'all';
+            if (hasActiveFilter) {
+                applyFilters();
+            } else {
+                document.getElementById('filterCount').textContent = allPredictions.length + ' событий';
+            }
         }
         
-        // ========== LEAFLET MAPS (OpenStreetMap - бесплатно, без API-ключа) ==========
+        // ========== TIMELINE ==========
+        async function buildTimeline(predictions) {
+            const rail = document.getElementById('timelineRail');
+            const startYear = currentYear - 5;
+            const endYear = currentYear + 95;
+            const totalYears = endYear - startYear;
+            const pxPerYear = 20;
+
+            rail.style.minWidth = (totalYears * pxPerYear + 40) + 'px';
+
+            // Clear old dots and year labels
+            rail.querySelectorAll('.timeline-dot,.timeline-year,.timeline-now').forEach(el => {
+                if (el.id === 'timelineNow') return;
+                el.remove();
+            });
+
+            // Position "now" line
+            const nowEl = document.getElementById('timelineNow');
+            const nowX = (currentYear - startYear) * pxPerYear + 20;
+            nowEl.style.left = nowX + 'px';
+
+            // Year labels every 5 years
+            for (let y = Math.floor(startYear / 5) * 5; y <= endYear; y += 5) {
+                const x = (y - startYear) * pxPerYear + 20;
+                const label = document.createElement('div');
+                label.className = 'timeline-year' + (y % 10 === 0 ? ' major' : '');
+                label.style.left = x + 'px';
+                label.textContent = '' + y;
+                rail.appendChild(label);
+                if (y === currentYear) {
+                    label.style.color = '#ff4444';
+                    label.style.fontWeight = 'bold';
+                }
+            }
+
+            // === HISTORICAL EVENTS (green border = confirmed) ===
+            try {
+                const histResp = await fetch('/api/historical');
+                const historical = await histResp.json();
+                historical.forEach(ev => {
+                    const x = (ev.year - startYear) * pxPerYear + 20;
+                    const dot = document.createElement('div');
+                    dot.className = 'timeline-dot';
+                    dot.style.left = x + 'px';
+                    dot.style.backgroundColor = getCircleColor(ev.category);
+                    dot.style.width = '10px'; dot.style.height = '10px';
+                    dot.style.border = '2px solid #00ff88';
+                    dot.style.boxShadow = '0 0 6px rgba(0,255,136,0.5)';
+                    dot.title = ev.year + ': ' + ev.title;
+
+                    const lbl = document.createElement('div');
+                    lbl.className = 'timeline-dot-label';
+                    lbl.style.borderColor = '#00ff88';
+                    lbl.innerHTML = '&#x2705; ' + ev.year + ': ' + ev.title.substring(0,40);
+                    dot.appendChild(lbl);
+                    dot.addEventListener('click', () => scrollToDetail(ev.year));
+                    rail.appendChild(dot);
+                });
+            } catch(e) { console.error('Historical events:', e); }
+
+            // Group predictions by year
+            const byYear = {};
+            predictions.forEach(p => {
+                const yr = p.predicted_year || p.year;
+                if (yr < startYear || yr > endYear) return;
+                if (!byYear[yr]) byYear[yr] = [];
+                byYear[yr].push(p);
+            });
+
+            // Dots per year
+            Object.entries(byYear).forEach(([year, preds]) => {
+                const x = (parseInt(year) - startYear) * pxPerYear + 20;
+                const isMulti = preds.length > 1;
+                const top = preds[0];
+
+                const dot = document.createElement('div');
+                dot.className = 'timeline-dot' + (isMulti ? ' multi-event' : '');
+                dot.style.left = x + 'px';
+                dot.style.backgroundColor = getCircleColor(top.category);
+                dot.style.color = getCircleColor(top.category);
+                dot.dataset.year = year;
+                dot.dataset.category = top.category;
+                if (isMulti) dot.dataset.count = preds.length;
+
+                const lbl = document.createElement('div');
+                lbl.className = 'timeline-dot-label';
+                lbl.innerHTML = `${year}: ${isMulti ? preds.length + ' событий' : getCategoryIcon(top.category) + ' ' + top.category}`;
+                dot.appendChild(lbl);
+
+                dot.addEventListener('click', () => {
+                    scrollToDetail(parseInt(year));
+                });
+
+                rail.appendChild(dot);
+            });
+
+            // Magnification on mousemove
+            const wrap = document.getElementById('timelineWrap');
+            wrap.onmousemove = function(e) {
+                const rect = wrap.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left + wrap.scrollLeft;
+                const dots = rail.querySelectorAll('.timeline-dot');
+                dots.forEach(d => {
+                    const dotX = parseFloat(d.style.left);
+                    const dist = Math.abs(mouseX - dotX);
+                    const maxDist = 60;
+                    if (dist < maxDist) {
+                        const scale = 1 + (1 - dist / maxDist) * 2.5;
+                        d.style.width = (8 * scale) + 'px';
+                        d.style.height = (8 * scale) + 'px';
+                        d.style.marginTop = (-2 * scale) + 'px';
+                        d.classList.add('magnified');
+                        d.style.zIndex = Math.round(scale * 3);
+                    } else {
+                        d.style.width = '8px';
+                        d.style.height = '8px';
+                        d.style.marginTop = '0px';
+                        d.classList.remove('magnified');
+                        d.style.zIndex = '3';
+                    }
+                });
+            };
+            wrap.onmouseleave = function() {
+                rail.querySelectorAll('.timeline-dot').forEach(d => {
+                    d.style.width = '8px';
+                    d.style.height = '8px';
+                    d.style.marginTop = '0px';
+                    d.classList.remove('magnified');
+                    d.style.zIndex = '3';
+                });
+            };
+        }
+
+        // ========== FILTERS ==========
+        function populateFilters() {
+            const countrySelect = document.getElementById('filterCountry');
+            const catSelect = document.getElementById('filterCategory');
+            const prevCountry = countrySelect.value || 'all';
+            const prevCategory = catSelect.value || 'all';
+
+            const countries = [...new Set(allPredictions.map(p => p.location || 'unknown'))].sort();
+            const cats = [...new Set(allPredictions.map(p => p.category))].sort();
+
+            countrySelect.innerHTML = '<option value="all">Все регионы</option>';
+            countries.forEach(c => {
+                countrySelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            catSelect.innerHTML = '<option value="all">Все категории</option>';
+            cats.forEach(c => {
+                catSelect.innerHTML += `<option value="${c}">${getCategoryIcon(c)} ${c}</option>`;
+            });
+
+            // Выбор пользователя сохраняется между автообновлениями данных
+            if ([...countrySelect.options].some(o => o.value === prevCountry)) {
+                countrySelect.value = prevCountry;
+            }
+            if ([...catSelect.options].some(o => o.value === prevCategory)) {
+                catSelect.value = prevCategory;
+            }
+        }
+
+        function applyFilters() {
+            const country = document.getElementById('filterCountry').value;
+            const category = document.getElementById('filterCategory').value;
+
+            filteredPredictions = allPredictions.filter(p => {
+                if (country !== 'all' && p.location !== country) return false;
+                if (category !== 'all' && p.category !== category) return false;
+                return true;
+            });
+
+            if (!sortAsc) filteredPredictions.reverse();
+            document.getElementById('filterCount').textContent = `${filteredPredictions.length} событий`;
+
+            buildTimeline(filteredPredictions);
+            renderFilteredEvents();
+        }
+
+        function toggleSort() {
+            sortAsc = !sortAsc;
+            const btn = document.getElementById('sortBtn');
+            btn.textContent = sortAsc ? 'По году ↑' : 'По году ↓';
+            if (sortAsc) btn.classList.add('filter-active'); else btn.classList.remove('filter-active');
+            applyFilters();
+        }
+
+        function renderFilteredEvents() {
+            const container = document.getElementById('eventsDetail');
+            if (filteredPredictions.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#8892b0;">Нет событий по фильтру</div>';
+                return;
+            }
+            const byDecade = {};
+            filteredPredictions.forEach(p => {
+                const decade = Math.floor((p.predicted_year || p.year) / 10) * 10;
+                if (!byDecade[decade]) byDecade[decade] = [];
+                byDecade[decade].push(p);
+            });
+            let html = '';
+            for (const decade of Object.keys(byDecade).sort()) {
+                html += `<h3 style="margin:15px 0 10px;color:#00d4ff;">${decade}-e</h3>`;
+                for (const p of byDecade[decade]) {
+                    const probPercent = (p.probability * 100).toFixed(0);
+                    const yr = p.predicted_year || p.year;
+                    html += `
+                        <div class="detail-card" id="detail-${yr}">
+                            <div class="detail-header">
+                                <strong>${getCategoryIcon(p.category)} ${p.category.toUpperCase()}</strong>
+                                <span style="color:${p.probability>0.7?'#ff6666':'#ffcc66'}">${probPercent}%</span>
+                            </div>
+                            <div>${yr} | ${p.location||'global'}</div>
+                            <div class="detail-desc">${p.description||''}</div>
+                        </div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
         function initMap() {
             if (!document.getElementById('map')) return;
 
             map = L.map('map', {
                 center: [30, 0],
                 zoom: 2,
+                minZoom: 1,
+                maxZoom: 8,
                 zoomControl: true,
-                attributionControl: true
+                attributionControl: false,
+                worldCopyJump: true
             });
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                maxZoom: 18,
-                attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
-            }).addTo(map);
+            // Офлайн-подложка: локальный GeoJSON границ стран (без внешних CDN и тайл-серверов)
+            fetch('/static/data/world.geojson')
+                .then(r => r.json())
+                .then(geo => {
+                    L.geoJSON(geo, {
+                        style: {
+                            color: '#3a4370',
+                            weight: 1,
+                            fillColor: '#1a2040',
+                            fillOpacity: 1
+                        }
+                    }).addTo(map);
+                })
+                .catch(err => console.error('Офлайн-карта: не удалось загрузить GeoJSON:', err));
 
             loadLocationData();
         }
 
         function getCircleColor(category) {
-            const colors = {
-                'землетрясение': '#ff6600',
-                'цунами': '#0066ff',
-                'наводнение': '#00ccff',
-                'пожар': '#ff4400',
-                'ураган': '#44aaff',
-                'экономический кризис': '#ff8800',
-                'война': '#ff0000',
-                'эпидемия': '#8800ff',
-                'засуха': '#cc8800',
-                'революция': '#ff00ff',
-                'экологическая катастрофа': '#22aa22'
-            };
-            return colors[category] || '#00d4ff';
+            return getCategoryColor(category);
         }
 
         async function loadLocationData() {
@@ -736,7 +1250,7 @@
                 const events = await response.json();
                 const predResponse = await fetch('/api/predictions');
                 const predData = await predResponse.json();
-                const allPredictions = predData.predictions || [];
+                const allPreds = predData.predictions || [];
 
                 if (events.length === 0) {
                     container.innerHTML = '<div style="text-align: center; padding: 20px; color: #8892b0;">Нет событий с высокой вероятностью. Нажмите «ЗАПУСТИТЬ УГЛУБЛЁННЫЙ АНАЛИЗ» для генерации предсказаний.</div>';
@@ -747,7 +1261,7 @@
                         const reasoning = event.reasoning || 'Анализ выполнен на основе исторических циклов.';
                         const description = event.description || 'Значительное событие прогнозируется в указанный период.';
                         const isAi = event.ai_enhanced;
-                        const relatedCount = allPredictions.filter(p =>
+                        const relatedCount = allPreds.filter(p =>
                             p.predicted_year === event.predicted_year && p.category === event.category
                         ).length;
 
@@ -832,6 +1346,9 @@
                 loadCausalChains(),
                 loadLocationData()
             ]);
+            buildTimeline(allPredictions);
+            populateFilters();
+            document.getElementById('filterCount').textContent = allPredictions.length + ' событий';
         }
 
         // ========== ПЕРЕГЕНЕРАЦИЯ ==========
@@ -939,6 +1456,74 @@
             }
         }
 
+        // ========== БЭКТЕСТИНГ ==========
+        async function runBacktest() {
+            if (operationInProgress) return;
+            operationInProgress = true;
+            showStatus('🔬', 'Бэктестинг: проверка точности на исторических данных...', 10);
+            const timer = simulateProgress(10, 85, 10000);
+
+            try {
+                const response = await fetch('/api/backtest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ from_year: 2000 })
+                });
+                const result = await response.json();
+                clearInterval(timer);
+
+                if (result.status === 'success') {
+                    document.getElementById('accuracyPanel').style.display = 'block';
+                    const bars = document.getElementById('accuracyBars');
+                    let html = '';
+                    const cats = Object.entries(result.by_category).sort((a, b) => b[1].accuracy - a[1].accuracy);
+                    for (const [cat, data] of cats) {
+                        const pct = Math.round(data.accuracy * 100);
+                        const color = pct >= 70 ? '#00ff88' : pct >= 50 ? '#ffaa00' : '#ff4444';
+                        html += `<div style="display:flex;align-items:center;margin:5px 0;font-size:0.82em;">
+                            <span style="width:140px;">${getCategoryIcon(cat)} ${cat}</span>
+                            <div style="flex:1;height:6px;background:#2a2f4a;border-radius:3px;margin:0 10px;">
+                                <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
+                            </div>
+                            <span style="color:${color};width:45px;text-align:right;">${pct}%</span>
+                            <span style="color:#667;font-size:0.8em;margin-left:4px;">${data.hits}/${data.total}</span>
+                        </div>`;
+                    }
+                    html += `<div style="margin-top:10px;font-size:0.9em;color:#00d4ff;">Общая точность: <b>${Math.round(result.total_accuracy*100)}%</b>${result.cycles_adjusted ? ' | Скорректировано циклов: '+result.cycles_adjusted : ''}</div>`;
+                    bars.innerHTML = html;
+                    showStatus('✅', `Бэктестинг: точность ${Math.round(result.total_accuracy*100)}%`, 100);
+                    setTimeout(hideStatus, 3000);
+                }
+            } catch (e) {
+                showStatus('❌', 'Ошибка бэктестинга', 0);
+            } finally {
+                operationInProgress = false;
+            }
+        }
+
+        // ========== EVENT MODAL ==========
+        function openEventModal(prediction) {
+            const yr = prediction.predicted_year || prediction.year;
+            document.getElementById('eventModalTitle').innerHTML = `${getCategoryIcon(prediction.category)} ${prediction.category.toUpperCase()} — ${yr} год`;
+            document.getElementById('eventModalBody').innerHTML = `
+                <p><strong>📍 Локация:</strong> ${prediction.location||'глобально'}</p>
+                <p><strong>📊 Вероятность:</strong> <span style="color:${prediction.probability>0.7?'#ff4444':'#ffaa00'}">${(prediction.probability*100).toFixed(0)}%</span></p>
+                <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:6px;margin:8px 0;">
+                    <p style="color:#ffaa00;font-size:0.8em;">📝 ОПИСАНИЕ</p>
+                    <p style="font-size:0.9em;">${prediction.description||'Нет описания'}</p>
+                </div>
+                <div style="background:rgba(0,212,255,0.05);padding:10px;border-radius:6px;margin:8px 0;">
+                    <p style="color:#00d4ff;font-size:0.8em;">🔬 ОБОСНОВАНИЕ</p>
+                    <p style="font-size:0.85em;color:#8892b0;">${prediction.reasoning||'Нет данных'}</p>
+                </div>
+                ${prediction.ai_enhanced ? '<span class="ai-badge" style="background:#00d4ff;color:#000;">🧠 AI</span>' : ''}
+            `;
+            document.getElementById('eventModal').style.display = 'flex';
+        }
+        function closeEventModal() {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+
         // ========== EMAIL ==========
         function openEmailModal() {
             document.getElementById('emailModal').style.display = 'flex';
@@ -988,19 +1573,24 @@
         function scrollToDetail(year) {
             const element = document.getElementById(`detail-${year}`);
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                element.style.background = 'rgba(0, 212, 255, 0.2)';
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.style.background = 'rgba(0, 212, 255, 0.25)';
+                element.style.borderLeft = '3px solid #00d4ff';
+                element.style.transition = 'background 0.3s, border-left 0.3s';
                 setTimeout(() => {
                     element.style.background = '';
-                }, 2000);
+                    element.style.borderLeft = '';
+                }, 2500);
             }
         }
         
         // ========== ИНИЦИАЛИЗАЦИЯ ==========
         document.querySelector('.close')?.addEventListener('click', closeEmailModal);
         window.onclick = function(event) {
-            const modal = document.getElementById('emailModal');
-            if (event.target === modal) closeEmailModal();
+            const emailModal = document.getElementById('emailModal');
+            const eventModal = document.getElementById('eventModal');
+            if (event.target === emailModal) closeEmailModal();
+            if (event.target === eventModal) closeEventModal();
         };
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1010,9 +1600,12 @@
         checkAIStatus();
         setInterval(checkAIStatus, 30000);
         
-        loadKeyEvents();
-        loadEventsDetail();
-        loadCausalChains();
+        (async () => {
+            await loadServerConfig();
+            loadKeyEvents();
+            loadEventsDetail();
+            loadCausalChains();
+        })();
         
         setInterval(() => {
             loadKeyEvents();

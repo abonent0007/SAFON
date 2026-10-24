@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+logs/
+.env
+data/
+.playwright-mcp/
+.opencode/node_modules/
+.opencode/traces/
+safon_map_check.png
+web/*.mhtml
+web/*.htm
+web/*_files/

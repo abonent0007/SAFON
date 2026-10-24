@@ -45,7 +45,7 @@ if %errorlevel% equ 0 (
     echo   [OK] LM Studio обнаружен (порт 1234)
 ) else (
     echo   ⚠️ LM Studio не запущен!
-    echo   Запустите LM Studio, загрузите DeepSeek V4 Pro
+    echo   Запустите LM Studio, загрузите модель DeepSeek
     echo   и нажмите "Start Local Inference Server"
     echo.
     set /p CONT="Продолжить без AI? (y/n): "

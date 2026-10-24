@@ -1,5 +1,5 @@
 """
-Модуль анализа событий с использованием DeepSeek V4 Pro
+Модуль анализа событий с использованием DeepSeek
 Поддерживает: облачный API и локальный LM Studio
 """
 
@@ -18,16 +18,16 @@ def _safe_print(message):
 
 
 class UltimateSemanticAnalyzer:
-    """Анализатор с использованием DeepSeek V4 Pro (LM Studio или API)"""
+    """Анализатор с использованием DeepSeek (LM Studio или API)"""
     
     def __init__(self):
-        _safe_print("🧠 Инициализация нейросетевого анализатора DeepSeek V4 Pro...")
+        _safe_print("🧠 Инициализация нейросетевого анализатора DeepSeek...")
         self.deepseek = get_deepseek_engine()
         status = self.deepseek.get_system_status()
         
         if status['available']:
             if status['mode'] == 'lm-studio':
-                _safe_print("   ✅ LM Studio обнаружен! DeepSeek V4 Pro готов (порт: 1234)")
+                _safe_print("   ✅ LM Studio обнаружен! DeepSeek готов (порт: 1234)")
             else:
                 _safe_print(f"   ✅ DeepSeek API готов (модель: {status['model']})")
         else:
@@ -39,7 +39,7 @@ class UltimateSemanticAnalyzer:
     
     def analyze(self, title: str, description: str, year: int, location: str = "") -> Dict:
         """
-        Анализирует событие с помощью DeepSeek V4 Pro
+        Анализирует событие с помощью DeepSeek
         """
         try:
             result = self.deepseek.analyze_event(title, description, year)
@@ -52,7 +52,7 @@ class UltimateSemanticAnalyzer:
             
             return result
         except Exception as e:
-            print(f"Ошибка анализа через DeepSeek: {e}")
+            _safe_print(f"Ошибка анализа через DeepSeek: {e}")
             return self._fallback_analysis(title, description, year, location)
     
     def _fallback_analysis(self, title: str, description: str, year: int, location: str) -> Dict:
@@ -115,17 +115,38 @@ class UltimateSemanticAnalyzer:
         return delays.get(category, 2)
     
     def enhance_prediction(self, prediction: Dict) -> Dict:
-        """Улучшает предсказание с помощью DeepSeek"""
+        """Улучшает предсказание с помощью DeepSeek с полным контекстом"""
         if not self.deepseek.get_system_status()['available']:
             return prediction
-        
+
         try:
-            description = self.deepseek.generate_prediction_text(prediction)
-            if description and "Ошибка" not in description and len(description) > 20:
+            category = prediction.get('category', '')
+            reasoning = prediction.get('reasoning', '')
+
+            # Извлекаем названия исторических событий из reasoning
+            event_titles = []
+            import re
+            titles_found = re.findall(r'(?:—|:)\s*(.+?)(?:;|\.|$)', reasoning)
+            for t in titles_found:
+                t = t.strip()
+                if len(t) > 10 and len(t) < 150:
+                    event_titles.append(t)
+
+            # Wikipedia-контекст для исторических событий
+            wiki_context = self.deepseek.get_wikipedia_context(event_titles[:3]) if event_titles else ""
+            # Текущий контекст по категории
+            current_context = self.deepseek.get_current_context(category)
+
+            description = self.deepseek.generate_prediction_text(
+                prediction,
+                events_context=wiki_context,
+                current_context=current_context
+            )
+            if description and "Ошибка" not in description and len(description) > 40:
                 prediction['description'] = description
                 prediction['ai_enhanced'] = True
         except Exception as e:
-            print(f"Ошибка генерации описания: {e}")
+            _safe_print(f"Error generating AI description: {e}")
         
         return prediction
     

@@ -14,6 +14,8 @@ from typing import List, Dict, Optional
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from .config import get_enrichment_templates, get_categories
+
 
 def _safe_print(message):
     try:
@@ -25,36 +27,9 @@ def _safe_print(message):
 class HistoryEnricher:
     """Автоматический поиск исторических событий по циклическим паттернам"""
 
-    WIKI_SEARCH_QUERIES = {
-        "землетрясение": ["{year} earthquake", "earthquakes in {year}"],
-        "цунами": ["{year} tsunami", "tsunamis in {year}"],
-        "наводнение": ["{year} flood", "floods in {year}"],
-        "пожар": ["{year} wildfire", "great fire of {year}"],
-        "ураган": ["{year} hurricane", "typhoon {year}"],
-        "экономический кризис": ["{year} financial crisis", "panic of {year}"],
-        "война": ["{year} war", "battle of {year}"],
-        "эпидемия": ["{year} plague", "pandemic {year}"],
-        "революция": ["{year} revolution", "revolt of {year}"],
-        "засуха": ["{year} famine", "drought in {year}"],
-        "экологическая катастрофа": ["{year} oil spill", "nuclear accident {year}"],
-    }
-
-    DDG_TEMPLATES = {
-        "землетрясение": [
-            "major earthquake {year} magnitude",
-            "earthquake {year} history casualties",
-        ],
-        "цунами": ["tsunami {year} disaster", "tsunami {year} Indian Ocean Pacific"],
-        "наводнение": ["major flood {year} disaster", "flood {year} casualties"],
-        "пожар": ["great fire {year} disaster", "wildfire {year} acres burned"],
-        "ураган": ["hurricane {year} category disaster", "typhoon {year} casualties"],
-        "экономический кризис": ["financial crisis {year} recession", "stock market crash {year}"],
-        "война": ["war {year} conflict invasion", "battle {year} war conquest"],
-        "эпидемия": ["pandemic {year} plague outbreak", "plague epidemic {year}"],
-        "революция": ["revolution {year} uprising", "rebellion {year} overthrow"],
-        "засуха": ["drought {year} famine", "famine {year} starvation"],
-        "экологическая катастрофа": ["environmental disaster {year}", "oil spill nuclear {year}"],
-    }
+    def _templates(self) -> Dict:
+        """Шаблоны поиска из конфига (config/safon_config.json -> enrichment)"""
+        return get_enrichment_templates()
 
     def __init__(self, db, deepseek_engine=None):
         self.db = db
@@ -101,19 +76,23 @@ class HistoryEnricher:
     def search_duckduckgo(self, query: str, max_results: int = 5) -> List[Dict]:
         try:
             from ddgs import DDGS
-            with DDGS() as ddgs:
-                results = list(ddgs.text(query, max_results=max_results))
+            with DDGS(timeout=15) as ddgs:
+                results = list(ddgs.text(query, max_results=max_results, backend='html'))
             return results
         except ImportError:
             try:
                 from duckduckgo_search import DDGS
-                with DDGS() as ddgs:
-                    results = list(ddgs.text(query, max_results=max_results))
+                with DDGS(timeout=15) as ddgs:
+                    results = list(ddgs.text(query, max_results=max_results, backend='html'))
                 return results
             except ImportError:
                 return []
         except Exception as e:
-            _safe_print(f"   ⚠️ DDG: {e}")
+            err_msg = str(e)[:80]
+            if 'timeout' in err_msg.lower() or 'timed out' in err_msg.lower():
+                pass  # silently skip timeout
+            else:
+                _safe_print(f"   ⚠️ DDG: {err_msg}")
             return []
 
     def detect_cycle_gaps(self, events: List[Dict], category: str) -> List[int]:
@@ -166,12 +145,12 @@ class HistoryEnricher:
                     data['source'] = 'wikipedia'
                     data['source_confidence'] = 0.85
                     return data
-        except Exception:
-            pass
+        except Exception as e:
+            _safe_print(f"   ⚠️ AI-разбор: {e}")
         return None
 
     def enrich_from_wikipedia(self, category: str, gap_year: int) -> Optional[Dict]:
-        queries = self.WIKI_SEARCH_QUERIES.get(category, [f"{category} {gap_year}"])
+        queries = self._templates().get('wiki_queries', {}).get(category, [f"{category} {gap_year}"])
         for query_template in queries:
             query = query_template.format(year=gap_year)
             results = self.search_wikipedia(query, max_results=3)
@@ -231,7 +210,7 @@ class HistoryEnricher:
             cat_events = sorted([e['year'] for e in events if e['category'] == category])
             if cat_events:
                 min_y, max_y = min(cat_events), max(cat_events)
-                gaps = list(range(max(min_y, 500), min(max_y, 2020), random.randint(15, 25)))
+                gaps = list(range(max(min_y, 500), min(max_y, 2020), 20))
             else:
                 gaps = list(range(1500, 2020, 20))
 
@@ -254,7 +233,7 @@ class HistoryEnricher:
                     continue
 
             # 2. DuckDuckGo fallback
-            templates = self.DDG_TEMPLATES.get(category, [f"{category} {gap_year} history"])
+            templates = self._templates().get('ddg_templates', {}).get(category, [f"{category} {gap_year} history"])
             query = random.choice(templates).format(year=gap_year)
             results = self.search_duckduckgo(query, max_results=3)
             if results:
@@ -290,7 +269,7 @@ class HistoryEnricher:
         _safe_print("=" * 60)
         _safe_print("Источники: Wikipedia API + DuckDuckGo\n")
 
-        categories = list(self.WIKI_SEARCH_QUERIES.keys())
+        categories = list(self._templates().get('wiki_queries', {}).keys()) or list(get_categories().keys())
         total_added = 0
         summary = {}
         lock = threading.Lock()

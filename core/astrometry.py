@@ -165,7 +165,7 @@ class AstrometryModule:
         for category, years in events_by_category.items():
             if len(years) < 5:
                 continue
-            print(f"   Анализ {category} ({len(years)} событий)...")
+            _safe_print(f"   Анализ {category} ({len(years)} событий)...")
             
             for p1 in self.PRIMARY_PLANETS:
                 for p2 in self.PRIMARY_PLANETS:
@@ -197,7 +197,7 @@ class AstrometryModule:
                                 confidence=min(0.9, lift / 2),
                                 discovered_at=datetime.now()
                             ))
-                            print(f"      ✓ {p1}-{p2} {aspect_name} → {category} (lift {lift:.1f}x)")
+                            _safe_print(f"      ✓ {p1}-{p2} {aspect_name} → {category} (lift {lift:.1f}x)")
         
         self.correlations = correlations
         return correlations

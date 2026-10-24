@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 logs/
 .env
-data/
+/data/
 .playwright-mcp/
 .opencode/node_modules/
 .opencode/traces/
